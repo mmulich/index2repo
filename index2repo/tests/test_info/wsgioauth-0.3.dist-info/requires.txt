@@ -1,0 +1,3 @@
+webob
+oauth2
+httplib2

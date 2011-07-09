@@ -1,0 +1,129 @@
+Metadata-Version: 1.0
+Name: wsgioauth
+Version: 0.3
+Summary: 
+A WSGI OAuth for working with OAuth from the consumer and service provider
+perspective. Contains a middleware for protected WSGI applications with an
+associated administration application. Provides a simple library to help
+consumers integrate OAuth protected resources into their applications.
+Home-page: http://weblion.psu.edu/
+Author: Michael Mulich | WebLion Group, Penn State University
+Author-email: support@weblion.psu.edu
+License: GPL
+Description: --------
+        Overview
+        --------
+        
+        The wsgioauth package is a Web Server Gateway Interface (WSGI) applications library that integrates OAuth into a WSGI application.  The package has been created to serve both service provider and consumer applications.
+        
+        Service Provider
+        ================
+        
+        The service provider libraries are made up of two pieces: a WSGI middleware and a WSGI application.  The application is used to administer the provisioning of consumer information; and optionally could be used to remove access tokens.  This package defines a very limited XML-RPC API (see the calls module) for use with the service provider administration application.  It is recommended that the application be overridden or at the very least minimally uses the XML-RPC API.
+        
+        The service provider WSGI middleware is used to intercept OAuth requests and protect the application's resources.  A resource could be anything from a file or page to a remote procedure call (RPC).  A storage abstraction is necessary to run the middleware.  The provider module contains a Storage class that should be sub-classed to use whatever database your feel like using.  The Storage class is an example of a non-persistent storage that can be used, but will loose all consumer and token data during an application restart.  Authentication can be done by the protected application or a third application that would be running on an entirely different server.  The authorization is handled by a plugin that will most likely been custom for each implementation.  To register the a plugin, use the 'wsgioauth_authentication' egg entry-point group (see this package's setup.py for an example).  OAuth signatures methods are also looked up using egg entry-points; so one could define their own signature method if needed.  The 'wsgioauth_signatures' group is used to register signature method plugins.  By default, this package registers signatures methods for PLAINTEXT and HMAC_SHA1.
+        
+        Consumer
+        ========
+        
+        The consumer library needs to be fleshed out a bit more.  At the moment, the consumer library consists of a client that operates with OAuth version 1.0a.
+        
+        Example
+        =======
+        
+        This package contains a directory called `example` where two scripts can be found: consumer.py and protected_resouce.py.  These two scripts illustrate a working example of the protected resource and consumer library in action.  The example is limited but shows the the usage of this library and that it works. :)
+        
+        To run the example you will need to install wsgiref, which is not a dependency of this package, but is used by the examples.  To easy_install wsgiref do the following from the command-line::
+        
+        $ easy_install wsgiref
+        
+        To run the examples do the following::
+        
+        $ cd wsgioauth
+        $ python example/protected_resource.py &
+        $ python example/consumer.py &
+        
+        Open your web browser and go to the address http://localhost:8081/.  There you will be given a link to print your vacation picture (see the OAuth specification for details about this example use-case).  After clicking this link the consumer obtains the access token to make a call to the protected resource for the image.  In this case we are simply using an echo application to echo the parameters.  The results will show on the http://localhost:8081/print_vacation page, along with a link back to the index page.  The access token information will be displayed on the index page after it has been acquired.
+        
+        This is a very minimal example that may in the future evolve into a more robust example.  Hopefully the commenting in the examples is enough for one to understand the usage of this package.
+        
+        ----------
+        TODO items
+        ----------
+        
+        - Make the XML-RPC API also play friendly with JSON-RPC requests.
+        - Build a consumer framework that an application can tap into.
+        - Create egg entry-points for token verification generator functions. The verification generator is used to define a string for the oauth_verifier parameter.  It could be useful to define real words rather than a random string of letters and numbers.
+        - Fix the various registrations that currently happen through module variables (e.g. wsgioauth.utils.CALLS).
+        - Go back through all the code where an error is raised and try to be more specific about what went wrong.
+        
+        
+        ---------
+        Changelog
+        ---------
+        
+        0.3 (2010-01-25)
+        ================
+        
+        - Included a distutils manifest file; so that all files in the package can be released onto PyPi.
+        
+        0.2 (2010-01-25)
+        ================
+        
+        - Moved the MockStorage class to the provider module and renamed it to Storage.  It turns out this class might not be so singular use after all.  The move was warranted by a ZODB storage implementation (see the wsgioauth.zodb package).
+        - Added a verifier check that is required by OAuth 1.0a.  This checks that the verifiers match when making a request for an access token.  Also, the verifier is set during the authorization process.
+        - Wrote individual methods for pulling OAuth parameters from the various places they can reside.  By doing this, a bug in the HMAC_SHA1 custom signature method was fixed.  The bug existed because the HTTP Authorization header parameters were not being taken into account when creating the base signature.
+        - Fixed an issue with the nonce check, where requests for authorization were being passed through the middleware as full OAuth requests with a nonce value of None.  This caused an invalid NOnceReplay error when attempting to do another authorization request.  So, the nonce check method execution was moved into the signature check method, where it would not be executed by the authorization code.
+        - Created an example service provider and consumer application.
+        - Created the consumer Client and Request classes that respectively subclasses httplib2's Http and oauth2's Request.  These subclassed versions work with OAuth version 1.0a.
+        - Registered the echo application for use in the examples.
+        - Removed the wsgiref dependency.  However, the wsgiref package is still required to run the examples, but not required in the library itself.
+        - Moved the package for pre-alpha to alpha.
+        
+        0.1 (2010-01-06)
+        ================
+        
+        - Initial pre-alpha release.
+        
+        0.0 (2009-12-00)
+        ================
+        
+        - Created the service provider middleware from the ashes of another package I was working on. The middleware is used to authorize users attempting to access the protected resource (aka the application or parts of the application).
+        - Established egg entry-points for:
+        
+        - Simple authentication plugins that would most likely call up the applications login or some central login page. (see setup.py's entry_points for an example)
+        - Signature plugins that are used to sign, unsign and check OAuth requests.
+        
+        - Created examples (in the mock module) for:
+        
+        - A service provider administration application.
+        - A very simple storage implementation.
+        
+        - Created our own Token class based off off oauth2.Token, because we needed a new constructor for keyword arguments and the ability to plug-in our own verifier generation.
+        - Replaced oauth2.Request with a subclassed webob.Request at wsgioauth.request.Request.  The subclass simply adds the *oauth_params* method to provider an easy way of gathering the oauth parameters from a request of any of the `three acceptable methods <http://oauth.net/core/1.0a/#consumer_req_param>`_.
+        - Replaced oauth2.Server with a WSGI application/middleware at wsgioauth.provider.*.
+        
+        
+        -------
+        License
+        -------
+        
+        Copyright (c) 2008-2009 The Pennsylvania State University. WebLion packages are developed and maintained by the WebLion Group and its partners.
+        
+        This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+        
+        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+        
+        You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+        
+        This document is written using the Structured Text format for conversion into alternative formats.
+        
+Keywords: web wsgi oauth authentication authorization
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Programming Language :: Python
+Classifier: Topic :: Security
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Internet :: WWW/HTTP :: WSGI
+Classifier: Topic :: Internet :: WWW/HTTP :: WSGI :: Application
+Classifier: Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware
