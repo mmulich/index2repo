@@ -15,7 +15,7 @@ from pkgmeta.index2repo.config import LOGGER_NAME
 
 
 def main():
-    parser = argparse.ArgumentParser("Index to Repository")
+    parser = argparse.ArgumentParser(description="Index to Repository")
     parser.add_argument('-d', '--debug', action='store_true', default=False)
     parser.add_argument('--all-releases',
                         action='store_true', default=False,
