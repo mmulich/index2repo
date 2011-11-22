@@ -9,10 +9,11 @@ import os
 import logging
 import argparse
 import shutil
+import index2repo.indirection
 from packaging.errors import IrrationalVersionError
 from packaging.pypi.simple import Crawler, DEFAULT_SIMPLE_INDEX_URL
 
-from pkgmeta.index2repo.config import LOGGER_NAME
+from index2repo.config import LOGGER_NAME
 
 XXX_sample_size = None
 
@@ -97,20 +98,22 @@ def main():
     parser.add_argument('--xxx-sample-size', type=int, nargs=1)
     args = parser.parse_args()
 
-    # XXX values
     if args.xxx_sample_size:
         global XXX_sample_size
         XXX_sample_size = args.xxx_sample_size[0]
+    # /XXX
 
     logger = logging.getLogger(LOGGER_NAME)
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
+    #: Establish a download location
     package_downloads = os.path.join(os.curdir, 'downloads')
     package_downloads = os.path.abspath(package_downloads)
     if not os.path.exists(package_downloads):
         os.mkdir(package_downloads)
 
+    #: Initialize the crawler
     crawl = crawl_index(args.all_releases)
 
     collected_metadata = []
